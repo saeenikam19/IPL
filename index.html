@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DYPSEM | IPL 2026</title>
+<style>
+    body, html {
+        margin: 0; padding: 0;
+        background: #050505;
+        color: white;
+        font-family: 'Montserrat', sans-serif;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    canvas {
+        position: fixed;
+        top: 0; left: 0;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    /* Glass Shield */
+    #glass-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: opacity 0.5s, transform 0.5s;
+    }
+
+    .brand-logo {
+        color: #FFD700;
+        font-size: 1.2rem;
+        letter-spacing: 12px;
+        margin-bottom: 10px;
+    }
+
+    .auction-title {
+        font-size: 4rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin: 0;
+        text-align: center;
+    }
+
+    /* The Gavel */
+    #gavel-tool {
+        font-size: 80px;
+        margin-top: 50px;
+        cursor: pointer;
+        filter: drop-shadow(0 0 20px #FFD700);
+        transition: transform 0.1s;
+        user-select: none;
+        pointer-events: all;
+    }
+
+    #gavel-tool:hover { transform: scale(1.2) rotate(-15deg); }
+    #gavel-tool:active { transform: scale(0.8) rotate(-45deg); }
+
+    .hint {
+        margin-top: 30px;
+        color: #FFD700;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        font-size: 0.8rem;
+        animation: breathe 1.5s infinite;
+    }
+
+    @keyframes breathe {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+    }
+
+    /* Result UI */
+    #main-content {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        z-index: 5;
+    }
+
+    .live-now {
+        font-size: 6rem;
+        color: #FFD700;
+        font-weight: 900;
+        text-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+    }
+</style>
+</head>
+<body>
+
+<canvas id="fireworks"></canvas>
+
+<div id="glass-overlay">
+    <div class="brand-logo">DYPSEM</div>
+    <h1 class="auction-title">IPL AUCTION 2026</h1>
+    <div id="gavel-tool" onclick="shatter(event)">🔨</div>
+    <div class="hint">Strike the Gavel to Start</div>
+</div>
+
+<div id="main-content">
+    <h1 class="live-now">AUCTION START</h1>
+    <p style="letter-spacing: 10px; color: white; font-size: 30px;">LET'S THE BIDDING WAR BEGIN!!</p>
+</div>
+
+<script>
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let width, height;
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.onresize = resize;
+    resize();
+
+    function shatter(e) {
+        const glass = document.getElementById('glass-overlay');
+        const content = document.getElementById('main-content');
+        
+        // 1. Shatter Effect
+        glass.style.opacity = '0';
+        glass.style.transform = 'scale(1.5)';
+        setTimeout(() => glass.style.display = 'none', 500);
+
+        // 2. Reveal Content
+        content.style.opacity = '1';
+        content.style.transition = 'opacity 1s ease-in';
+
+        // 3. Fataka Explosion at Mouse Location
+        createExplosion(e.clientX, e.clientY, 300);
+
+        // 4. Heavy Stadium Flash
+        document.body.style.background = "#fff";
+        setTimeout(() => { document.body.style.background = "#050505"; }, 100);
+
+        // 5. Continuous Sparkles
+        setInterval(() => {
+            createExplosion(Math.random() * width, Math.random() * height, 40);
+        }, 400);
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const force = Math.random() * 20 + 5;
+            this.vx = Math.cos(angle) * force;
+            this.vy = Math.sin(angle) * force;
+            this.alpha = 1;
+            this.gravity = 0.3;
+            this.friction = 0.94;
+        }
+        update() {
+            this.vx *= this.friction;
+            this.vy *= this.friction;
+            this.vy += this.gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+            this.alpha -= 0.015;
+        }
+        draw() {
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function createExplosion(x, y, count) {
+        const colors = ['#FFD700', '#FF3300', '#FFFFFF', '#00FF00', '#FF00FF'];
+        for(let i=0; i<count; i++) {
+            particles.push(new Particle(x, y, colors[Math.floor(Math.random()*colors.length)]));
+        }
+    }
+
+    function animate() {
+        ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
+        ctx.fillRect(0, 0, width, height);
+        particles.forEach((p, i) => {
+            if(p.alpha > 0) {
+                p.update();
+                p.draw();
+            } else {
+                particles.splice(i, 1);
+            }
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+</script>
+
+</body>
+</html>
